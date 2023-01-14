@@ -1,10 +1,11 @@
-Conf_Post_Install
-Script bash to configure Debian 11 after fresh installation
+NAME		Conf_Post_Install.sh
 
-NOTES
-	 NAME:	Conf_Post_Install.sh
-   VERSION : 1.0  15/01/2023
-	 AUTHOR:	Frédéric Puren
+VERSION		1.0  15/01/2023
+
+AUTHOR		Frédéric Puren
+
+
+Script bash to configure Debian 11 after fresh installation
 
 Script testé sur Debian 11
 
