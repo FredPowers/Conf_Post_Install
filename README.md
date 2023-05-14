@@ -16,18 +16,6 @@ Script pour configurer Debian 11 après l'installation,
 	- En faire un serveur DHCP, un serveur DNS, un serveur Web ou un routeur.
 
 
-Ce script a ete edité sur windows, si besoin une fois ce script placé sur une machine Linux il faut utiliser dos2unix pour le rendre compatible Unix.
-si besoin pour installer dos2unix :
-user@debian:/$ apt install dos2unix
-
-Utilisation :
-user@debian:/$ dos2unix <script.sh>
-
-ensuite on peut l'executer sans probleme avec :
-user@debian:/$ ./script.sh
-
-si KO vérifier le droit d'execution sur le script avec ls -l
-
 pour le partage de dossier dans VmWare
 si le partage de dossier n'apparait pas dans /mnt/hgfs
 lancer la commande suivante : vmhgfs-fuse .host:/ /mnt/hgfs/ -o allow_other -o uid=1000
