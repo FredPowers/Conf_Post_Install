@@ -13,7 +13,7 @@ Script pour configurer Debian 11 après l'installation,
 	-changer le nom
 	- COnfigurer l'IP
 	- Déclarer les bons dépots
-	- En faire un serveur DHCP, un serveur DNS, un serveur Web ou un routeur.
+	- En faire un serveur DHCP, un serveur DNS, un serveur Web, un serveur centreon, un serveur glpi ou en faire un routeur.
 
 
 pour le partage de dossier dans VmWare
