@@ -25,7 +25,7 @@ Si vous etes dans le dossier hgfs, le quitter puis y revenir, le dossier partag√
 
 Menu
 
-<img width="264" alt="1" src="https://user-images.githubusercontent.com/105367565/212493127-68d01b87-8386-49f7-b59f-bb529b92d84b.png">
+![2023-06-06 16_28_57-DebSrv - VMware Workstation 16 Player (Non-commercial use only)](https://github.com/FredPowers/Conf_Post_Install/assets/105367565/25c150bd-cab5-4051-9537-1c17914f03e2)
 
 
 Nom d'h√¥te
