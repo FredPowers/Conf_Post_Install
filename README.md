@@ -28,37 +28,3 @@ Menu
 ![2023-06-06 16_28_57-DebSrv - VMware Workstation 16 Player (Non-commercial use only)](https://github.com/FredPowers/Conf_Post_Install/assets/105367565/25c150bd-cab5-4051-9537-1c17914f03e2)
 
 
-Nom d'hôte
-
-<img width="125" alt="2023-01-14 19_58_23-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493162-79cc8398-12f1-4768-809d-5885a1d3403c.png">
-
-
-Configuration IP
-
-<img width="214" alt="2023-01-14 19_58_44-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493173-e49069d6-fcb9-48c9-a9b7-3655c491bc15.png">
-
-
-Vérifier proxy
-
-<img width="176" alt="2023-01-14 19_59_17-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493185-278feeb0-d620-4958-9007-88d85fae96cc.png">
-
-
-Configurer un serveur DHCP
-
-<img width="283" alt="2023-01-14 19_59_45-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493196-1939ec6f-2752-44c2-a0fa-af8291137695.png">
-
-
-Configurer un serveur DNS
-
-<img width="241" alt="2023-01-14 20_00_24-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493199-259afaeb-4051-48c3-92f0-344d9fffd93a.png">
-
-
-Configurer un serveur LAMP
-
-<img width="133" alt="2023-01-14 20_00_49-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493209-9fffb8f7-0efb-439e-9dc6-59a92ee31e7a.png">
-
-
-Ajouter un repertoire au $PATH
-
-<img width="139" alt="2023-01-14 20_03_41-DebServer - VMware Workstation 16 Player (Non-commercial use only)" src="https://user-images.githubusercontent.com/105367565/212493214-0e638218-451b-4bef-b401-38947ec14ac8.png">
-
