@@ -6,16 +6,14 @@
 #   VERSION : 1.0  15/01/2023
 #	AUTHOR:	Frédéric Puren
 
-# Script testé sur Debian 11.6
+# Script testé sur Debian 11
 
 # Script pour configurer Debian 11 après l'installation,
 	# changer le nom
 	# Configurer l'IP
 	# Déclarer les bons dépots
 	# En faire un serveur DHCP, un serveur DNS, un serveur Web ou un routeur.
-	# Installer et configurer Ansible
-	# Installer GLPI
-	# 
+	# Installer GLPI, centreon, Xivo
 
 
 
@@ -23,7 +21,7 @@
 ## si le partage de dossier n'apparait pas dans /mnt/hgfs
 ## lancer la commande suivante : vmhgfs-fuse .host:/ /mnt/hgfs/ -o allow_other -o uid=1000
 # Si vous etes dans le dossier hgfs, le quitter puis y revenir, le dossier partagé devrait maintenant y apparaitre
-# Si la commande vmhgfs-fuse remonte une erreur il faut installer open-vm-tools ( apt install open-vm-tools )
+# Si la commande vmhgfs-fuse remonte une erreur il faut installer open-vm-tools ( apt-get install open-vm-tools )
 
 ######################## choix repertoire ###########################
 #read -p "entrer le nom du dossier recherché :"
@@ -96,46 +94,78 @@ do
 	echo
 	echo
 	date=$(date)
-	echo "###############################################################################"
-	echo "#                            $date                                            #"
-	echo "###############################################################################"
+	echo "#########################################################################"
+	echo "                     $date                  "
+	echo "#########################################################################"
 	echo
 	echo
 	
-	# Vérification du réseau
-	# Voir pour vérifier la connectivité internet
+	#Ajouter les dépôt Bullseye
 
-	if apt list --installed | grep ^bc/stable
-	then
-		1>/dev/null
-	else
-		apt install bc -y
-	fi
-	echo
-
-	version=$(cat /etc/debian_version)
-
-	echo -e "verion de debian installée : $vert$version$normal"
-	echo
-	if (( $(echo "$version < 11" | bc -l) ))
-	then
-		echo -e ""$orange"la version de debian qui exécute ce script est antérieur à celle où celui-ci a été testé$normal"
-		echo "Voulez-vous continuer ? [O/N]"
-		read -p "" -r reponse
-
-		while [[ $reponse != "O" && $reponse != "o" && $reponse != "N" && $reponse != "n" ]]
-		do
-			echo
-			echo "erreur de frappe, veuillez recommencer"
-			echo
-			echo -e ""$orange"la version de debian qui exécute ce script est antérieur à celle où celui-ci a été testé$normal"
-			echo "Voulez-vous continuer ? [O/N]"
-			read -p "" -r reponse
-		done
-		if [[ $reponse == "N" || "$reponse" = "n" ]]
+	if [ -a /etc/apt/sources.list ]
 		then
-			exit 0
-		fi
+			sed -i 's/^/#/' /etc/apt/sources.list
+			
+			echo "
+	deb http://deb.debian.org/debian bullseye main contrib
+	deb http://deb.debian.org/debian/ bullseye-updates main contrib
+	deb http://security.debian.org/debian-security bullseye-security main contrib" >> /etc/apt/sources.list
+
+		else
+			echo "
+	deb http://deb.debian.org/debian bullseye main contrib
+	deb http://deb.debian.org/debian/ bullseye-updates main contrib
+	deb http://security.debian.org/debian-security bullseye-security main contrib" > /etc/apt/sources.list
+
+
+	fi
+
+	# Vérification du réseau
+	if ping -c 2 8.8.8.8 | grep Unreachable;
+		then
+			echo
+			echo -e ""$orange" /!\ Information /!\ "
+			echo -e ""$orange"-------------------$normal"
+			echo -e ""$rouge"Internet n'est pas joignable$normal"
+		else
+
+			apt-get update -y
+
+			# Vérification du réseau
+			# Voir pour vérifier la connectivité internet
+
+			if apt-get list --installed | grep ^bc/stable
+			then
+				echo "Le paquet bc est déjà installé"
+			else
+				apt-get install bc -y
+			fi
+			echo
+
+			version=$(cat /etc/debian_version)
+
+			echo -e "version de debian installée : $vert$version$normal"
+			echo
+			if (( $(echo "$version < 11" | bc -l) ))
+			then
+				echo -e ""$orange"la version de debian qui exécute ce script est antérieur à celle où celui-ci a été testé$normal"
+				echo "Voulez-vous continuer ? [O/N]"
+				read -p "" -r reponse
+
+				while [[ $reponse != "O" && $reponse != "o" && $reponse != "N" && $reponse != "n" ]]
+				do
+					echo
+					echo "erreur de frappe, veuillez recommencer"
+					echo
+					echo -e ""$orange"la version de debian qui exécute ce script est antérieur à celle où celui-ci a été testé$normal"
+					echo "Voulez-vous continuer ? [O/N]"
+					read -p "" -r reponse
+				done
+				if [[ $reponse == "N" || "$reponse" = "n" ]]
+				then
+					exit 0
+				fi
+			fi
 	fi
 	echo
 	echo "Configuration Post installation Debian 11"
@@ -156,7 +186,8 @@ do
 	echo -e 	   "12 : Intégrer un hôte au domaine"
 	echo -e 	   "13 : Installation GLPI"
 	echo -e 	   "14 : Intérroger une base de donnée mariadb"
-	echo -e 	   "15 : Configuration Rsyslog (serveur & client)$normal"
+	echo -e 	   "15 : Configuration Rsyslog (serveur & client)"
+	echo -e        "16 : Installation de Xivo - Serveur VoiP$normal"
 	#echo -e "10 : Installation de logiciels$normal"
 	echo -e ""$rouge"q : quitter$normal"
 	echo
@@ -259,7 +290,7 @@ do
 					ip route | grep "default" | awk -F"via" 'NR==1{split($2,a," ");print a[1]}'
 					echo
 					echo -e ""$vert"adresse DNS$normal"
-					cat /etc/resolv.conf | awk '{print $2,$4,$6,$8,$10,$12}'
+					cat /etc/resolv.conf | grep nameserver | awk '{print $2,$4,$6,$8,$10,$12}'
 					echo
 
 					sleep 3
@@ -268,8 +299,8 @@ do
 
 					echo -e ""$orange"Ping vers la passerelle$normal"
 
-					echo begin ping
-					if ping -c 1 $Passerelle | grep Unreachable;
+					echo "envoi de 2 requêtes ping :"
+					if ping -c 2 $Passerelle | grep -E "Unreachable|injoignable";
 					then echo -e ""$rouge"La passerelle $Passerelle n'est pas joignable$normal";
 					else echo -e ""$vert"La passerelle $Passerelle est joignable$normal";
 					fi
@@ -792,7 +823,7 @@ Acquire::ftp::proxy \"ftp://$ip_proxy/\";
 					echo
 					echo -e ""$orange"Vérification du package isc-dhcp-server$normal"
 					echo -e ""$orange"---------------------------------------$normal"
-					if (apt list --installed | grep isc-dhcp-server)
+					if (apt-get list --installed | grep isc-dhcp-server)
 					then
 						echo -e ""$vert"isc-dhcp-server est installé$normal"
 						echo
@@ -846,15 +877,15 @@ Acquire::ftp::proxy \"ftp://$ip_proxy/\";
 					echo -e "$bleu---------------------------------------------------$normal"
 
 
-					if (apt list --installed | grep isc-dhcp-server)
+					if (apt-get list --installed | grep isc-dhcp-server)
 					then
 						echo
 						echo ""$orange"isc-dhcp-server est déjà installé$normal"
 
 					else
-						echo "installation avec apt install isc-dhcp-server"
+						echo "installation avec apt-get install isc-dhcp-server"
 
-						if apt install isc-dhcp-server -y | grep -E "Erreur|Impossible"
+						if apt-get install isc-dhcp-server -y | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -957,15 +988,15 @@ subnet $IP_Reseau netmask $masque {
 					echo -e "$bleu-----------------------------------------------------$normal"
 					echo 
 
-					if (apt list --installed | grep isc-dhcp-server)
+					if (apt-get list --installed | grep isc-dhcp-server)
 					then
 						echo
 						echo ""$orange"isc-dhcp-server est déjà installé$normal"
 
 					else
-						echo "installation avec apt install isc-dhcp-server"
+						echo "installation avec apt-get install isc-dhcp-server"
 
-						if apt install isc-dhcp-server -y | grep -E "Erreur|Impossible"
+						if apt-get install isc-dhcp-server -y | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -1073,15 +1104,15 @@ subnet $IP_reseau netmask $masque {
 					echo -e "$bleu-------------------------------------------------------------$normal"
 					echo 
 
-					if (apt list --installed | grep isc-dhcp-server)
+					if (apt-get list --installed | grep isc-dhcp-server)
 					then
 						echo
 						echo ""$orange"isc-dhcp-server est déjà installé$normal"
 
 					else
-						echo "installation avec apt install isc-dhcp-server"
+						echo "installation avec apt-get install isc-dhcp-server"
 
-						if apt install isc-dhcp-server -y | grep -E "Erreur|Impossible"
+						if apt-get install isc-dhcp-server -y | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -1203,15 +1234,15 @@ subnet $ip_reseau netmask $masque {
 					echo -e "$bleu-------------------------------------------------------------$normal"
 					echo 
 
-					if (apt list --installed | grep isc-dhcp-server)
+					if (apt-get list --installed | grep isc-dhcp-server)
 					then
 						echo
 						echo ""$orange"isc-dhcp-server est déjà installé$normal"
 
 					else
-						echo "installation avec apt install isc-dhcp-server"
+						echo "installation avec apt-get install isc-dhcp-server"
 						
-						if apt install isc-dhcp-server -y | grep -E "Erreur|Impossible"
+						if apt-get install isc-dhcp-server -y | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -1330,7 +1361,7 @@ subnet $ip_reseau netmask $masque {
 					echo
 					echo -e ""$orange"Vérification du package isc-dhcp-relay$normal"
 					echo -e ""$orange"-----------------------------$normal"
-					if (apt list --installed | grep isc-dhcp-relay/stable)
+					if (apt-get list --installed | grep isc-dhcp-relay/stable)
 					then
 						echo -e ""$vert"isc-dhcp-relay est installé$normal"
 						echo
@@ -1348,7 +1379,7 @@ subnet $ip_reseau netmask $masque {
 						echo "Pendant l'installation du paquet une fenêtre de configuration va s'ouvrir, laissez vide et appuyez sur <entrée> pour chaque champs"
 						echo
 						read -n1 -r -p "Appuyer sur entrée pour continuer..."
-						if apt install isc-dhcp-relay -y | grep -E "Erreur|Impossible"
+						if apt-get install isc-dhcp-relay -y | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -1438,7 +1469,7 @@ subnet $ip_reseau netmask $masque {
 					echo
 					echo -e ""$orange"Vérification du package bind9$normal"
 					echo -e ""$orange"-----------------------------$normal"
-					if (apt list --installed | grep bind9/stable)
+					if (apt-get list --installed | grep bind9/stable)
 					then
 						echo -e ""$vert"bind9 est installé$normal"
 						bind9=$(echo -e ""$vert"bind9 est installé$normal")
@@ -1513,7 +1544,7 @@ subnet $ip_reseau netmask $masque {
 						echo 
 					fi			
 
-					if (apt list --installed | grep bind9/stable)
+					if (apt-get list --installed | grep bind9/stable)
 					then
 						echo
 						echo -e ""$vert"Vérification du status du service DNS$normal"
@@ -1553,15 +1584,15 @@ subnet $ip_reseau netmask $masque {
 					echo -e "$bleu---------------------------------------------$normal"
 					echo
 					echo -e ""$vert"Vérification de l'installation de bind9$normal"
-					if (apt list --installed | grep bind9/stable)
+					if (apt-get list --installed | grep bind9/stable)
 					then
 						echo
 						echo "bind9 est déjà installé"
 
 					else
-						echo "installation avec apt install bind9"
+						echo "installation avec apt-get install bind9"
 
-						if apt install bind9 | grep -E "Erreur|Impossible"
+						if apt-get install bind9 | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -1668,14 +1699,14 @@ acl rsxclts { $reseau; };" >> /etc/bind/named.conf
 					echo -e "$bleu---------------------------------------------$normal"
 					echo 
 					echo -e ""$vert"Vérification de l'installation de bind9$normal"
-					if (apt list --installed | grep bind9/stable)
+					if (apt-get list --installed | grep bind9/stable)
 					then
 						echo
 						echo "bind9 est déjà installé"
 
 					else
-						echo "installation avec apt install bind9"
-						if apt install bind9 -y | grep -E "Erreur|Impossible"
+						echo "installation avec apt-get install bind9"
+						if apt-get install bind9 -y | grep -E "Erreur|Impossible"
 						then
 							echo 
 							echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -1884,9 +1915,9 @@ zone \""$zone_inverse".in-addr.arpa {
 			do
 				echo -e ""$bleu"1 : Vérification serveur LAMP"
 				echo -e "2 : Configuration serveur LAMP"
-				echo -e "3 : Pré-configuration d'un site web"
-				echo -e "4 : Générer un certificat pour la connexion https"
-				echo -e "5 : Générer un certificat pki Mircosoft$normal"
+				echo -e "3 : Générer un certificat pour la connexion https"
+				echo -e "4 : Générer un certificat pki Mircosoft"
+				echo -e "5 : Pré-configuration d'un site web$normal"
 				echo -e ""$rouge"q : quitter$normal"
 				echo
 				echo "veuillez choisir :"
@@ -1902,7 +1933,7 @@ zone \""$zone_inverse".in-addr.arpa {
 					echo -e "$bleu      Vérification serveur LAMP     $normal"
 					echo -e "$bleu------------------------------------$normal"
 					echo
-					if (apt list --installed | grep apache2/stable)
+					if (apt-get list --installed | grep apache2/stable)
 					then
 						echo
 						echo -e ""$vert"apache est installé$normal"
@@ -1912,7 +1943,7 @@ zone \""$zone_inverse".in-addr.arpa {
 						echo -e ""$rouge"Apache n'est pas installé$normal"
 					fi
 
-					if (apt list --installed | grep php/stable)
+					if (apt-get list --installed | grep php/stable)
 					then
 						echo
 						echo -e ""$vert"PHP est installé$normal"
@@ -1922,7 +1953,7 @@ zone \""$zone_inverse".in-addr.arpa {
 						echo -e ""$rouge"PHP n'est pas installé$normal"
 					fi
 
-					if (apt list --installed | grep mariadb-server/stable)
+					if (apt-get list --installed | grep mariadb-server/stable)
 					then
 						echo
 						echo -e ""$vert"MariaDB est installé$normal"
@@ -1944,14 +1975,14 @@ zone \""$zone_inverse".in-addr.arpa {
 					echo -e ""$orange"Installtion et configuration apache2$normal"
 					echo -e ""$orange"------------------------------------$normal"
 					echo
-					if (apt list --installed | grep apache2/stable)
+					if (apt-get list --installed | grep apache2/stable)
 					then
 						echo
 						echo "apache2 est déjà installé"
 
 					else
-						echo "installation avec apt install apache2"
-						apt install apache2 -y
+						echo "installation avec apt-get install apache2"
+						apt-get install apache2 -y
 					
 						if_erreur
 
@@ -1990,12 +2021,12 @@ zone \""$zone_inverse".in-addr.arpa {
 
 					for pkg in ${liste_apt[@]}
 					do
-						if (apt list --installed | grep $pkg/stable 1>/dev/null)
+						if (apt-get list --installed | grep $pkg/stable 1>/dev/null)
 						then
 							echo
 							echo "$pkg est déjà installé"
 						else
-							apt install -y $pkg
+							apt-get install -y $pkg
 
 							if_erreur
 
@@ -2017,14 +2048,14 @@ phpinfo();
 					echo -e ""$orange"Installation et configuration de MariaDB$normal"
 					echo -e ""$orange"---------------------------------------$normal"
 					echo
-					if (apt list --installed | grep mariadb-server/stable)
+					if (apt-get list --installed | grep mariadb-server/stable)
 					then
 						echo
 						echo "mariadb est déjà installé"
 
 					else
-						echo "installation avec apt install mariadb-server"
-						apt install -y mariadb-server
+						echo "installation avec apt-get install mariadb-server"
+						apt-get install -y mariadb-server
 						
 						if_erreur
 
@@ -2055,7 +2086,69 @@ phpinfo();
 					;;
 
 
+
 				3)
+
+					echo -e "$bleu--------------------------------------------$normal"
+					echo -e "$bleu      Générer un certificat auto-signé      $normal"
+					echo -e "$bleu--------------------------------------------$normal"
+					echo
+					# Le Certificat auto-signé sert de test pour l'authentification https.
+					# Il faut préférer par la suite mettre en place un certificat basé sur une authorité de certification
+					
+					# Création de l'arborescence de stockage des certificats
+					mkdir /etc/ssl/certs/java
+					mkdir /etc/ssl/{certs-auto,reqs}
+
+
+					echo "entrer le nom du site, format FQDN, exemple : monsite.domaine.fr"
+					echo -n ""
+					read nom
+					echo
+					# Création de la clé privé 
+					openssl genrsa -out /etc/ssl/private/"$nom".key 2048
+
+					# Création de la demande de signature
+					openssl req -new -key /etc/ssl/private/"$nom".key -out /etc/ssl/reqs/"$nom".csr -sha256
+
+					# Création du certificat auto-signé
+					openssl x509 -req -days 36500 -in /etc/ssl/reqs/"$nom".csr -signkey /etc/ssl/private/"$nom".key -out /etc/ssl/certs-auto/"$nom".cert -sha256
+	
+					# Activation du module ssl
+					a2enmod ssl
+
+					apache2ctl graceful
+					;;
+
+				4)
+					echo -e "$bleu-----------------------------------------------$normal"
+					echo -e "$bleu      Générer un certificat pki Mircosoft      $normal"
+					echo -e "$bleu-----------------------------------------------$normal"
+					echo
+					# controle du certiricat via le serveur AD Windows Serveur ou le rôle AD CS (service de certificat Active Directory - pki) est installé
+					mkdir /etc/ssl/pki
+					mkdir /etc/ssl/pki/{CA,Private,Reqs,Certificate}
+
+					echo "entrer le nom du site, format FQDN, exemple : monsite.domaine.fr"
+					echo -n ""
+					read nom
+					echo
+
+					# Création de la clé privé 
+					openssl genrsa -out /etc/ssl/pki/Private/"$nom".key 2048
+
+					# Création de la demande de certificat
+					openssl req -new -sha256 -key /etc/ssl/pki/Private/"$nom".key -out /etc/ssl/pki/Reqs/"$nom".csr
+
+					# Deamnde de certificat a copier dans le navigateur du client (http://ServerAD.domaine.tld/certsrv)
+					cat /etc/ssl/pki/Reqs/"$nom".csr
+
+					;;
+
+
+
+
+				5)
 
 					echo -e "$bleu---------------------------------$normal"
 					echo -e "$bleu      Configurer un site web     $normal"
@@ -2158,65 +2251,6 @@ phpinfo();
 					;;
 
 
-				4)
-
-					echo -e "$bleu--------------------------------------------$normal"
-					echo -e "$bleu      Générer un certificat auto-signé      $normal"
-					echo -e "$bleu--------------------------------------------$normal"
-					echo
-					# Le Certificat auto-signé sert de test pour l'authentification https.
-					# Il faut préférer par la suite mettre en place un certificat basé sur une authorité de certification
-					
-					# Création de l'arborescence de stockage des certificats
-					mkdir /etc/ssl/certs/java
-					mkdir /etc/ssl/{certs-auto,reqs}
-
-
-					echo "entrer le nom du site, format FQDN, exemple : monsite.domaine.fr"
-					echo -n ""
-					read nom
-					echo
-					# Création de la clé privé 
-					openssl genrsa -out /etc/ssl/private/"$nom".key 2048
-
-					# Création de la demande de signature
-					openssl req -new -key /etc/ssl/private/"$nom".key -out /etc/ssl/reqs/"$nom".csr -sha256
-
-					# Création du certificat auto-signé
-					openssl x509 -req -days 36500 -in /etc/ssl/reqs/"$nom".csr -signkey /etc/ssl/private/"$nom".key -out /etc/ssl/certs-auto/"$nom".cert -sha256
-	
-					# Activation du module ssl
-					a2enmod ssl
-
-					apache2ctl graceful
-					;;
-
-				5)
-					echo -e "$bleu-----------------------------------------------$normal"
-					echo -e "$bleu      Générer un certificat pki Mircosoft      $normal"
-					echo -e "$bleu-----------------------------------------------$normal"
-					echo
-					# controle du certiricat via le serveur AD Windows Serveur ou le rôle AD CS (service de certificat Active Directory - pki) est installé
-					mkdir /etc/ssl/pki
-					mkdir /etc/ssl/pki/{CA,Private,Reqs,Certificate}
-
-					echo "entrer le nom du site, format FQDN, exemple : monsite.domaine.fr"
-					echo -n ""
-					read nom
-					echo
-
-					# Création de la clé privé 
-					openssl genrsa -out /etc/ssl/pki/Private/"$nom".key 2048
-
-					# Création de la demande de certificat
-					openssl req -new -sha256 -key /etc/ssl/pki/Private/"$nom".key -out /etc/ssl/pki/Reqs/"$nom".csr
-
-					# Deamnde de certificat a copier dans le navigateur du client (http://ServerAD.domaine.tld/certsrv)
-					cat /etc/ssl/pki/Reqs/"$nom".csr
-
-					;;
-
-
 				[qQ])
 					clear
 					script
@@ -2272,7 +2306,7 @@ phpinfo();
 					# Installation des dépôts
 
 					# les dépendances
-					if apt update -y | grep -E "Erreur|Impossible"
+					if apt-get update -y | grep -E "Erreur|Impossible"
 					then
 						echo 
 						echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -2281,14 +2315,37 @@ phpinfo();
 						exit 4
 					fi
 
+					if (apt-get list --installed | grep curl/stable)
+					then
+						echo
+						echo "curl est déjà installé"
+
+					else
+						echo "installation avec apt-get install curl"
+						apt-get install curl -y
+						
+						if_erreur
+					fi
 
 
-					apt install lsb-release ca-certificates apt-transport-https software-properties-common wget gnupg2
+					if (apt-get list --installed | grep sudo/stable)
+					then
+						echo
+						echo "sudo est déjà installé"
+
+					else
+						echo "installation avec apt-get install sudo"
+						apt-get install sudo -y
+						
+						if_erreur
+					fi
+
+					apt-get install lsb-release ca-certificates apt-transport-https software-properties-common wget gnupg2
 
 					if_erreur
 
 
-					# Installer le dépôt Sury APT pour PHP 8.1
+					# Installer le dépôt Sury apt-get pour PHP 8.1
 					echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/sury-php.list
 
 					if_erreur
@@ -2298,7 +2355,7 @@ phpinfo();
 
 					if_erreur
 
-					apt update
+					apt-get update
 
 					# Installation de MariaDB 10.5
 					curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | sudo bash -s -- --os-type=debian --os-version=11 --mariadb-server-version="mariadb-10.5"
@@ -2319,8 +2376,8 @@ phpinfo();
 					########## INSTALLATION & CONFIGURATION CENTREON ############
 
 					# Installation avec base de donnée locale
-					apt update
-					apt install -y centreon
+					apt-get update
+					apt-get install -y centreon
 
 					if_erreur
 
@@ -2376,16 +2433,16 @@ phpinfo();
 
 					for pkg in ${liste_apt[@]}
 						do
-							if (apt list --installed | grep $pkg)
+							if (apt-get list --installed | grep $pkg)
 							then
 								echo
 								echo -e ""$orange"$pkg est déjà installé$normal"
 								sleep 2
 
 							else
-								echo "installation avec apt install $pkg"
+								echo "installation avec apt-get install $pkg"
 								
-								if apt install $pkg -y | grep -E "Erreur|Impossible"
+								if apt-get install $pkg -y | grep -E "Erreur|Impossible"
 								then
 									echo 
 									echo -e ""$orange"Les dépots pour l'installation ne sont pas joignables$normal"
@@ -2446,13 +2503,13 @@ access          mongroupsecurite    \"\"      	any     		noauth    		exact   tru
 					# Ajout de l'utilisateur centreon-engine user
 					useradd --create-home centreon-engine
 					# Installation de gpg
-					apt install gpg
+					apt-get install gpg
 					# Ajout du dépôt Centreon
 					wget -qO- https://apt-key.centreon.com | gpg --dearmor > /etc/apt/trusted.gpg.d/centreon.gpg
 					echo "deb https://apt.centreon.com/repository/22.10/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/centreon.list
-					apt update
+					apt-get update
 					# Installation de centreon-nrpe3-daemon
-					apt install centreon-nrpe3-daemon centreon-plugin-operatingsystems-linux-local
+					apt-get install centreon-nrpe3-daemon centreon-plugin-operatingsystems-linux-local
 					# Création du répertoire pour le cache du plugin
 					mkdir -p /var/lib/centreon/centplugins/
 					chown centreon-engine: /var/lib/centreon/centplugins/
@@ -2493,7 +2550,7 @@ access          mongroupsecurite    \"\"      	any     		noauth    		exact   tru
 		10)
 
 			# dépendances nécessaires au bon fonctionnement de Docker
-			apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common
+			apt-get install apt-transport-https ca-certificates curl gnupg2 software-properties-common
 
 			# ajouter le dépôt officiel de Docker à notre machine Debian afin de pouvoir récupérer les sources
 			# récupération de la clé GPG qui nous permettra de valider les paquets récupérés depuis le dépôt Docker
@@ -2503,10 +2560,10 @@ access          mongroupsecurite    \"\"      	any     		noauth    		exact   tru
 			echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list
 
 			# mise à jour du cache des paquets pour prendre en compte les paquets de ce nouveau dépôt
-			apt update -y
+			apt-get update -y
 
 			# Installation de Docker
-			apt install docker-ce docker-ce-cli containerd.io
+			apt-get install docker-ce docker-ce-cli containerd.io
 
 			# Démarrer docker au démmarrage de la machine
 			systemctl enable docker
@@ -2650,7 +2707,7 @@ export PATH=\"$PATH:/$rep\"" >> /home/$login/.bashrc
 					echo -e "$bleu--------------------------------------$normal"
 					echo
 
-					apt install realmd sssd sssd-tools adcli krb5-user packagekit samba-common samba-common-bin samba-libs #resolvconf
+					apt-get install realmd sssd sssd-tools adcli krb5-user packagekit samba-common samba-common-bin samba-libs #resolvconf
 
 					if_erreur
 
@@ -2776,14 +2833,14 @@ export PATH=\"$PATH:/$rep\"" >> /home/$login/.bashrc
 			echo -e ""$orange"Installtion et configuration apache2$normal"
 					echo -e ""$orange"------------------------------------$normal"
 					echo
-					if (apt list --installed | grep apache2/stable)
+					if (apt-get list --installed | grep apache2/stable)
 					then
 						echo
 						echo "apache2 est déjà installé"
 
 					else
-						echo "installation avec apt install apache2"
-						apt install apache2 -y
+						echo "installation avec apt-get install apache2"
+						apt-get install apache2 -y
 					
 						if_erreur
 					
@@ -2816,14 +2873,14 @@ export PATH=\"$PATH:/$rep\"" >> /home/$login/.bashrc
 					echo -e ""$orange"Installtion de PHP$normal"
 					echo -e ""$orange"------------------$normal"
 					echo
-					if (apt list --installed | grep php/stable)
+					if (apt-get list --installed | grep php/stable)
 					then
 						echo
 						echo "php est déjà installé"
 
 					else
-						echo "installation avec apt install php"
-						apt install -y php php-mbstring php-curl php-gd php-mysql php-imap php-ldap php-xml php-apcu-bc php-xmlrpc php-cas php-intl php-zip php-bz2
+						echo "installation avec apt-get install php"
+						apt-get install -y php php-mbstring php-curl php-gd php-mysql php-imap php-ldap php-xml php-apcu-bc php-xmlrpc php-cas php-intl php-zip php-bz2
 					
 						if_erreur
 
@@ -2843,14 +2900,14 @@ phpinfo();
 					echo -e ""$orange"Installation et configuration de MariaDB$normal"
 					echo -e ""$orange"---------------------------------------$normal"
 					echo
-					if (apt list --installed | grep mariadb-server/stable)
+					if (apt-get list --installed | grep mariadb-server/stable)
 					then
 						echo
 						echo "mariadb est déjà installé"
 
 					else
-						echo "installation avec apt install mariadb-server"
-						apt install -y mariadb-server
+						echo "installation avec apt-get install mariadb-server"
+						apt-get install -y mariadb-server
 				
 						if_erreur
 
@@ -2914,7 +2971,7 @@ phpinfo();
 
 					# Installation de GLPI
 
-					apt install curl -y
+					apt-get install curl -y
 
 					cd /var/www/html
 
@@ -3044,14 +3101,14 @@ phpinfo();
 					echo -e ""$orange"Installation et configuration de Rsyslog$normal"
 							echo -e ""$orange"---------------------------------------$normal"
 							echo
-							if (apt list --installed | grep rsyslog/stable)
+							if (apt-get list --installed | grep rsyslog/stable)
 							then
 								echo
 								echo "rsyslog est déjà installé"
 
 							else
-								echo "installation avec apt install rsyslog"
-								apt install -y rsyslog
+								echo "installation avec apt-get install rsyslog"
+								apt-get install -y rsyslog
 							
 								if_erreur
 
@@ -3087,14 +3144,14 @@ phpinfo();
 					echo -e ""$orange"Installation et configuration de Rsyslog$normal"
 							echo -e ""$orange"---------------------------------------$normal"
 							echo
-							if (apt list --installed | grep rsyslog/stable)
+							if (apt-get list --installed | grep rsyslog/stable)
 							then
 								echo
 								echo "rsyslog est déjà installé"
 
 							else
-								echo "installation avec apt install rsyslog"
-								apt install -y rsyslog
+								echo "installation avec apt-get install rsyslog"
+								apt-get install -y rsyslog
 							
 								if_erreur
 
@@ -3127,6 +3184,40 @@ phpinfo();
 			;;
 
 
+		16)
+			echo -e "$bleu-------------------------------$normal"
+			echo -e "$bleu      Installation de Xivo     $normal"
+			echo -e "$bleu-------------------------------$normal"
+			echo
+			echo
+			echo -e ""$orange"Installation de Curl$normal"
+			echo -e ""$orange"--------------------$normal"
+			echo
+			if (apt-get list --installed | grep curl/stable)
+			then
+				echo
+				echo "Curl est déjà installé"
+
+			else
+				echo "installation avec apt-get install curl"
+				apt-get install curl -y
+			
+				if_erreur
+
+				echo -e ""$orange"--------------------- Installation de curl terminée ------------------$normal"
+			fi
+
+
+			wget http://mirror.xivo.solutions/xivo_install.sh
+
+			chmod +x xivo_install.sh
+
+			./xivo_install.sh -a 2023.05-latest
+
+			;;
+
+
+
 ####################################################################################
 		#13)
 			#echo -e "$bleu---------------------------------$normal"
@@ -3134,10 +3225,10 @@ phpinfo();
 			#echo -e "$bleu---------------------------------$normal"
 			#echo
 			# téléchargement des packages "secours" en local 
-			#apt download isc-dhcp-server isc-dhcp-relay bind9 tree vim
+			#apt-get download isc-dhcp-server isc-dhcp-relay bind9 tree vim
 
 			# Installation des packages
-			#apt install tree vim nmap -y
+			#apt-get install tree vim nmap -y
 			#;;
 
 ####################################################################################
@@ -3158,6 +3249,6 @@ phpinfo();
 	done
 }
 
-script |& tee -a /var/log/Conf_Post_Install.log
+script |& tee -a 2>/var/log/Conf_Post_Install.log
 
 #################### Fin Script ###################
