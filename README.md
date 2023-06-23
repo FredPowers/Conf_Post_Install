@@ -25,6 +25,6 @@ Si vous etes dans le dossier hgfs, le quitter puis y revenir, le dossier partag√
 
 Menu
 
-![2023-06-06 16_28_57-DebSrv - VMware Workstation 16 Player (Non-commercial use only)](https://github.com/FredPowers/Conf_Post_Install/assets/105367565/25c150bd-cab5-4051-9537-1c17914f03e2)
+![2023-06-22 16_12_49-Deb11 - VMware Workstation 16 Player (Non-commercial use only)](https://github.com/FredPowers/Conf_Post_Install/assets/105367565/37adbdab-dca1-4884-9c97-736e3175d51b)
 
 
